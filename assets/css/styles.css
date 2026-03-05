@@ -276,7 +276,7 @@ main {
 
 .qs-step h2 {
     font-family: var(--mono);
-    font-size: 15px;
+    font-size: 20px;
     color: var(--cyan);
     margin-bottom: 8px;
     font-weight: 600;
@@ -409,7 +409,7 @@ main {
 
 .example-card-body h2 {
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 20px;
     color: var(--cyan);
     margin-bottom: 6px;
     font-weight: 600;
