@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BADHAT</title>
+    <link rel="stylesheet" href="/src/assets/css/styles.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="logo">
+            <img src="/src/assets/images/Untitled.jpg" alt="BADHAT Logo">
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#quickstart">Quickstart</a></li>
+                <li><a href="#docs">Docs</a></li>
+                <li><a href="#examples">Examples</a></li>
+                <li><a href="https://github.com/lareponse/badhat/tree/main" target="_blank">Github</a></li>
+            </ul>
+        </nav>
+        <footer class="site-footer">
+            <p>&copy; 2026 all rights left</p>
+        </footer>
+    </header>
+
+    <main>
+
+        <!-- ═══════════ HOME ═══════════ -->
+        <section id="home">
+            <div class="home-inner">
+                <h1 class="home-title">BADHAT</h1>
+                <p class="home-tagline">Bits As Decision.<br>HTTP As Terminal.</p>
+
+                <div class="home-content">
+                    <span class="corner-br"></span>
+                    <span class="corner-bl"></span>
+
+                    <div class="home-frame">
+                        <img src="assets/images/LAMP.png" alt="LAMP Stack">
+                    </div>
+
+                    <div class="home-what">
+                        <h2>What is BADHAT?</h2>
+                        <p>"BADHAT's philosophy is based on absolute emergence: the application's structure arises from
+                            execution, without any pre-existing doctrine. The tool imposes nothing: <strong>no</strong>
+                            controllers, <strong>no</strong> dependency containers, <strong>no</strong> complex
+                            middleware, <strong>no</strong> heavy configuration, <strong>no</strong> pre-established
+                            architecture. The <strong>HTTP</strong> request is the only reality, and the file system is
+                            the only guide."</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ═══════════ QUICKSTART ═══════════ -->
+        <div class="breadcrumb">Home/Quickstart</div>
+        <section id="quickstart" class="section-content">
+            <h1 class="section-title">Quickstart</h1>
+            <p class="section-subtitle">Get BADHAT running in five minutes</p>
+
+            <div class="qs-step">
+                <h2>1. Initialize Project</h2>
+                <pre><code class="language-bash">mkdir myproject && cd myproject
+git init
+mkdir -p app/io/{route,render} public
+touch .gitignore</code></pre>
+            </div>
+
+            <div class="qs-step">
+                <h2>2. Add BADHAT Core via Subtree</h2>
+                <pre><code class="language-bash">git fetch --depth=1 git@github.com:lareponse/BADHAT.git main
+git subtree add --prefix=add/badhat FETCH_HEAD --squash</code></pre>
+                <ul>
+                    <li>--squash garde BADHAT comme un seul commit</li>
+                    <li>--depth=1 garde le fetch léger</li>
+                </ul>
+            </div>
+
+            <div class="qs-step">
+                <h2>3. Create Entry Point (Canonical)</h2>
+                <pre><code class="language-php">&lt;?php
+// public/index.php — BADHAT Entry Point
+set_include_path(__DIR__ . '/..' . PATH_SEPARATOR . get_include_path());
+$install = require 'add/badhat/trap.php';
+require 'add/badhat/map.php';
+require 'add/badhat/run.php';
+require 'add/badhat/http.php';
+require 'add/badhat/pdo.php';
+use function bad\map\{hook, seek, look};
+use function bad\http\{headers, out};
+use function bad\run\loot;
+use function bad\pdo\db;
+use const bad\trap\HND_ALL;
+use const bad\map\REBASE;
+use const bad\run\{INVOKE, BUFFER, RESULT};
+use const bad\http\ONE;
+
+// Bootstrap
+$install(HND_ALL);
+
+// DB bootstrap (REQUIRED before qp())
+$pdo = new PDO(
+    getenv('DB_DSN_')  ?: 'sqlite:' . __DIR__ . '/../db.sqlite',
+    getenv('DB_USER_') ?: null,
+    getenv('DB_PASS_') ?: null,
+    [
+        PDO::ATTR_ERRMODE            =&gt; PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE =&gt; PDO::FETCH_ASSOC,
+    ]
+);
+db($pdo);
+
+// Normalize request path
+$io   = __DIR__ . '/../app/io';
+$base = realpath($io . '/route') . '/';
+$key  = hook($_SERVER['REQUEST_URI'], "\0");
+
+// Phase 1 — Route (logic)
+$loot = [];
+$route = seek($base, $key, '.php');
+if ($route) {
+    [$file, $args] = $route;
+    $loot = loot([$file], $args, INVOKE);
+}
+
+// Phase 2 — Render (presentation)
+$render = look($io . '/render/', $key, '.php', REBASE);
+if ($render) {
+    $loot = loot([$render], $loot, BUFFER | INVOKE);
+}
+
+// Output
+if (isset($loot[RESULT]) &amp;&amp; is_string($loot[RESULT])) {
+    headers(ONE, 'Content-Type', 'text/html; charset=utf-8');
+    exit(out(200, $loot[RESULT]));
+}
+exit(out(404, 'Not Found'));</code></pre>
+            </div>
+
+            <div class="qs-step">
+                <h2>4. Environment Config</h2>
+                <pre><code class="language-bash"># .env (not tracked)
+cat > .env &lt;&lt; 'EOF'
+DB_DSN_=sqlite:db.sqlite
+DB_USER_=
+DB_PASS_=
+EOF
+
+# .gitignore
+cat > .gitignore &lt;&lt; 'EOF'
+.env
+*.sqlite
+EOF</code></pre>
+            </div>
+
+            <div class="qs-step">
+                <h2>5. Sample Route</h2>
+                <pre><code class="language-php">&lt;?php
+// app/io/route/users.php
+use function bad\pdo\qp;
+use function bad\http\{headers, out};
+use const bad\http\ONE;
+
+return function (array $args) {
+    if ($_POST) {
+        qp("INSERT INTO users (name) VALUES (?)", [$_POST['name']]);
+        headers(ONE, 'Location', '/users');
+        exit(out(302));
+    }
+    return [
+        'users' =&gt; qp("SELECT * FROM users")-&gt;fetchAll()
+    ];
+};</code></pre>
+            </div>
+
+            <div class="qs-step">
+                <h2>6. Sample Render</h2>
+                <pre><code class="language-php">&lt;?php
+// app/io/render/users.php
+$users = $args['users'] ?? [];
+?&gt;
+&lt;h1&gt;Users&lt;/h1&gt;
+&lt;ul&gt;
+&lt;?php foreach ($users as $user): ?&gt;
+    &lt;li&gt;&lt;?= htmlspecialchars($user['name'], ENT_QUOTES) ?&gt;&lt;/li&gt;
+&lt;?php endforeach; ?&gt;
+&lt;/ul&gt;
+&lt;form method="post"&gt;
+    &lt;input name="name" placeholder="Name" required&gt;
+    &lt;button&gt;Add&lt;/button&gt;
+&lt;/form&gt;
+&lt;?php
+return function (array $loot, array $args) {
+    $content = $loot[BUFFER] ?? '';
+    return "&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;&lt;title&gt;Users&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;$content&lt;/body&gt;
+&lt;/html&gt;";
+};</code></pre>
+            </div>
+
+            <div class="qs-step">
+                <h2>7. First Commit</h2>
+                <pre><code class="language-bash">git add .
+git commit -m "Initial BADHAT project"</code></pre>
+            </div>
+
+            <div class="qs-step">
+                <h2>8. Project Structure</h2>
+                <pre><code class="language-plaintext">myproject/
+├── .gitignore
+├── .env
+├── add/badhat/
+│   ├── auth.php
+│   ├── csrf.php
+│   ├── pdo.php
+│   ├── trap.php
+│   ├── http.php
+│   ├── map.php
+│   └── run.php
+├── app/io/
+│   ├── route/users.php
+│   └── render/users.php
+└── public/index.php</code></pre>
+            </div>
+
+            <div class="qs-step">
+                <h2>9. Test</h2>
+                <pre><code class="language-bash">cd public
+php -S localhost:8000</code></pre>
+            </div>
+
+            <div class="qs-step">
+                <h2>10. Update BADHAT Core</h2>
+                <pre><code class="language-bash">git fetch --depth=1 git@github.com:lareponse/BADHAT.git main
+git subtree pull --prefix=add/badhat FETCH_HEAD --squash</code></pre>
+                <ul>
+                    <li>db($pdo) must be called once per request before qp()</li>
+                    <li>Routing is filesystem-driven, not table-driven</li>
+                    <li>There is no hidden lifecycle</li>
+                    <li>If a file runs, it runs because you included it</li>
+                    <li>If something breaks, it breaks loudly</li>
+                </ul>
+            </div>
+
+        </section>
+
+        <!-- ═══════════ DOCS ═══════════ -->
+        <div class="breadcrumb">Home/Docs</div>
+        <section id="docs" class="section-content">
+            <h1 class="section-title">Docs</h1>
+
+            <nav class="module-nav">
+                <button onclick="document.getElementById('map').scrollIntoView({behavior:'smooth'})">Map</button>
+                <button onclick="document.getElementById('run').scrollIntoView({behavior:'smooth'})">Run</button>
+                <button onclick="document.getElementById('http').scrollIntoView({behavior:'smooth'})">Http</button>
+                <button onclick="document.getElementById('trap').scrollIntoView({behavior:'smooth'})">Trap</button>
+                <button onclick="document.getElementById('pdo').scrollIntoView({behavior:'smooth'})">Pdo</button>
+                <button onclick="document.getElementById('auth').scrollIntoView({behavior:'smooth'})">Auth</button>
+                <button onclick="document.getElementById('csrf').scrollIntoView({behavior:'smooth'})">Csrf</button>
+                <button onclick="document.getElementById('rfc').scrollIntoView({behavior:'smooth'})">Rfc</button>
+            </nav>
+
+            <div class="doc-section" id="map">
+                <h2>map.php</h2>
+                <p>The atelier begins here. map.php hooks the URL to reality, seeks in the depth of folders the piece
+                    that must respond, and lets you decide what happens.
+                    <br>Each hook, seek, and look is a conscious, traceable gesture shaping the request. It reminds you
+                    that every route has a life and a traceable cause.
+                </p>
+            </div>
+
+            <div class="doc-section" id="run">
+                <h2>run.php</h2>
+                <p>run.php orchestrates the gesture: include, invoke, buffer. It does no magic, it executes exactly what
+                    you choose.
+                    <br>loot() and flags are your brush and palette: you define the motion and the outcome. Precision
+                    and intention are everything here.
+                </p>
+            </div>
+
+            <div class="doc-section" id="http">
+                <h2>http.php</h2>
+                <p>http.php translates your gestures into tangible output: headers, out, csp_nonce. Here, the flow
+                    becomes visible, each request manifest.
+                    <br>Flags are the compass of your HTTP writing. Control is not hidden; it is explicit, immediate,
+                    and measurable.
+                </p>
+            </div>
+
+            <div class="doc-section" id="trap">
+                <h2>trap.php</h2>
+                <p>trap.php sets the frame for safety and observability: errors, exceptions, shutdowns — each incident
+                    is accountable.
+                    <br>Like an artist tracing their process, every event has a cause, every log a reference. Chaos is
+                    contained, visible, and interpretable.
+                </p>
+            </div>
+
+            <div class="doc-section" id="pdo">
+                <h2>pdo.php</h2>
+                <p>pdo.php is your connection to the material: the database. db(), qp(), trans() give you mastery over
+                    interactions,
+                    <br>yet no illusions: you see errors, you choose how to handle them. Your data has structure, and
+                    structure is respected.
+                </p>
+            </div>
+
+            <div class="doc-section" id="auth">
+                <h2>auth.php</h2>
+                <p>auth.php is minimal access control. checkin() and checkout() are keys you hand over and reclaim.
+                    Security is not decorative;
+                    <br>it is explicit, observable, and actionable. Every login is deliberate, every logout accountable.
+                </p>
+            </div>
+
+            <div class="doc-section" id="csrf">
+                <h2>csrf.php</h2>
+                <p>csrf.php manages the lifecycle and integrity of tokens. Every token reminds you that form has a cycle
+                    and actions are controlled.
+                    <br>TTL and validation define the visible limits of your workspace. It enforces discipline without
+                    obstructing creativity.
+                </p>
+            </div>
+
+            <div class="doc-section" id="rfc">
+                <h2>rfc.php</h2>
+                <p>rfc.php enforces rigor: each field name, value, and URL path adheres strictly to standards. Reality
+                    allows no arbitrary interpretation;
+                    <br>each request is a sculpture constrained by its framework. Standards are the invisible
+                    scaffolding of your expressive work.
+                </p>
+            </div>
+        </section>
+
+        <!-- ═══════════ EXAMPLES ═══════════ -->
+        <div class="breadcrumb">Home/Examples</div>
+        <section id="examples" class="section-content">
+            <h1 class="section-title">Examples</h1>
+            <p class="section-subtitle">Complete real-world projects with executable code</p>
+
+            <div class="examples-grid">
+
+                <div class="example-card">
+                    <div class="example-card-body">
+                        <h2>Content Management (Blog Engine)</h2>
+                        <pre><code class="language-php">&lt;?php
+// app/io/route/posts/edit.php
+use function bad\auth\checkin;
+use function bad\csrf\csrf;
+use function bad\pdo\qp;
+use function bad\http\{headers, out};
+use const bad\csrf\CHECK;
+use const bad\http\ONE;
+
+return function($args) {
+    if (!checkin()) {
+        headers(ONE, 'Location', '/login');
+        exit(out(302));
+    }
+
+    $id = $args[0] ?? throw new \InvalidArgumentException('Post ID required');
+
+    if ($_POST) {
+        csrf(CHECK, '_csrf') || exit(out(403, 'Invalid token'));
+        qp("UPDATE posts SET title=?, body=? WHERE id=?",
+            [$_POST['title'], $_POST['body'], $id]);
+        headers(ONE, 'Location', "/posts/$id");
+        exit(out(302));
+    }
+
+    return ['post' =&gt; qp("SELECT * FROM posts WHERE id = ?", [$id])-&gt;fetch()];
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-card-body">
+                        <h2>E-commerce Backend</h2>
+                        <pre><code class="language-php">&lt;?php
+// app/io/route/admin/orders.php
+use function bad\auth\checkin;
+use function bad\pdo\qp;
+use function bad\http\{headers, out};
+use const bad\http\ONE;
+
+return function($args) {
+    if (!checkin()) {
+        headers(ONE, 'Location', '/login');
+        exit(out(302));
+    }
+
+    $status = $_GET['status'] ?? 'pending';
+    $orders = qp("
+        SELECT o.*, u.email, COUNT(oi.id) as items
+        FROM orders o
+        JOIN users u ON o.user_id = u.id
+        LEFT JOIN order_items oi ON o.id = oi.order_id
+        WHERE o.status = ?
+        GROUP BY o.id
+        ORDER BY o.created_at DESC
+    ", [$status])-&gt;fetchAll();
+
+    return compact('orders', 'status');
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-card-body">
+                        <h2>JSON API</h2>
+                        <pre><code class="language-php">&lt;?php
+// app/io/route/api/users.php
+use function bad\pdo\qp;
+use function bad\http\{headers, out};
+use const bad\http\ONE;
+
+return function($args) {
+    $action = $args[0] ?? 'list';
+    $id = $args[1] ?? null;
+
+    $data = match($action) {
+        'list' =&gt; qp("SELECT id, name FROM users")-&gt;fetchAll(),
+        'get'  =&gt; qp("SELECT * FROM users WHERE id = ?", [$id])-&gt;fetch(),
+        default =&gt; throw new \InvalidArgumentException('Unknown action')
+    };
+
+    headers(ONE, 'Content-Type', 'application/json');
+    exit(out(200, json_encode($data)));
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-card-body">
+                        <h2>Dashboard Metrics</h2>
+                        <pre><code class="language-php">&lt;?php
+// app/io/route/dashboard/metrics.php
+use function bad\pdo\qp;
+
+return function($args) {
+    $range = $args[0] ?? '24h';
+    $hours = $range === '24h' ? 24 : 168;
+
+    return [
+        'metrics' =&gt; qp("
+            SELECT
+                DATE_FORMAT(timestamp, '%H:00') as hour,
+                SUM(requests) as total,
+                AVG(response_time) as avg_time
+            FROM metrics
+            WHERE timestamp &gt;= DATE_SUB(NOW(), INTERVAL ? HOUR)
+            GROUP BY hour
+        ", [$hours])-&gt;fetchAll(),
+        'range' =&gt; $range
+    ];
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-card-body">
+                        <h2>File Upload</h2>
+                        <pre><code class="language-php">&lt;?php
+// app/io/route/files/upload.php
+use function bad\auth\checkin;
+use function bad\csrf\csrf;
+use function bad\pdo\qp;
+use function bad\http\{headers, out};
+use const bad\csrf\CHECK;
+use const bad\http\ONE;
+
+return function($args) {
+    if (!checkin()) {
+        headers(ONE, 'Location', '/login');
+        exit(out(302));
+    }
+
+    if (!$_FILES)
+        return ['max_size' =&gt; ini_get('upload_max_filesize')];
+
+    csrf(CHECK, '_csrf') || exit(out(403, 'Invalid token'));
+
+    $file = $_FILES['file'];
+    $path = 'uploads/' . date('Y/m/') . uniqid() . '_' . basename($file['name']);
+
+    is_dir(dirname($path)) || mkdir(dirname($path), 0755, true);
+    move_uploaded_file($file['tmp_name'], $path);
+
+    qp("INSERT INTO files (name, path, size, user_id) VALUES (?, ?, ?, ?)",
+        [$file['name'], $path, $file['size'], checkin()]);
+
+    headers(ONE, 'Location', '/files');
+    exit(out(302));
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-card-body">
+                        <h2>IoT Data Collector</h2>
+                        <pre><code class="language-php">&lt;?php
+// app/io/route/api/sensors.php
+use function bad\pdo\qp;
+use function bad\http\{headers, out};
+use const bad\http\ONE;
+
+return function($args) {
+    headers(ONE, 'Content-Type', 'application/json');
+
+    $device_id = $args[0] ?? exit(out(400, '{"error":"Device ID required"}'));
+
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    $stmt = qp("INSERT INTO readings (device_id, type, value, ts) VALUES (?, ?, ?, ?)", []);
+
+    $count = 0;
+    foreach ($data['sensors'] as $s) {
+        $stmt-&gt;execute([$device_id, $s['type'], $s['value'], $s['ts']]);
+        ++$count;
+    }
+
+    exit(out(200, json_encode(['ok' =&gt; true, 'count' =&gt; $count])));
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-card-body">
+                        <h2>Multi-tenant SaaS</h2>
+                        <pre><code class="language-php">&lt;?php
+// app/io/route/app/projects.php
+use function bad\pdo\{db, qp};
+
+return function($args) {
+    $tenant = resolve_tenant($_SERVER['HTTP_HOST']);
+
+    db(new \PDO(
+        "mysql:host=localhost;dbname=tenant_{$tenant['id']};charset=utf8mb4",
+        getenv('DB_USER'),
+        getenv('DB_PASS'),
+        [\PDO::ATTR_ERRMODE =&gt; \PDO::ERRMODE_EXCEPTION]
+    ));
+
+    return [
+        'projects' =&gt; qp("
+            SELECT p.*, COUNT(t.id) as tasks
+            FROM projects p
+            LEFT JOIN tasks t ON p.id = t.project_id
+            GROUP BY p.id
+        ")-&gt;fetchAll(),
+        'tenant' =&gt; $tenant
+    ];
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-card-body">
+                        <h2>Transaction Example</h2>
+                        <pre><code class="language-php">&lt;?php
+// app/io/route/trading/execute.php
+use function bad\auth\checkin;
+use function bad\csrf\csrf;
+use function bad\pdo\{qp, trans};
+use function bad\http\{headers, out};
+use const bad\csrf\CHECK;
+use const bad\http\ONE;
+
+return function($args) {
+    if (!checkin()) {
+        headers(ONE, 'Location', '/login');
+        exit(out(302));
+    }
+
+    csrf(CHECK, '_csrf') || exit(out(403, 'Invalid token'));
+
+    $order = [
+        'user'   =&gt; checkin(),
+        'symbol' =&gt; $_POST['symbol'],
+        'qty'    =&gt; (int)$_POST['quantity'],
+        'price'  =&gt; (float)$_POST['price'],
+        'type'   =&gt; $_POST['type']
+    ];
+
+    return trans(function($pdo) use ($order) {
+        qp("INSERT INTO orders (user_id, symbol, qty, price, type) VALUES (?, ?, ?, ?, ?)",
+            [$order['user'], $order['symbol'], $order['qty'], $order['price'], $order['type']],
+            [],
+            $pdo);
+
+        return ['order_id' =&gt; $pdo-&gt;lastInsertId(), 'status' =&gt; 'pending'];
+    });
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="example-card-plain">
+                    <div class="example-card-body">
+                        <h2>Scope Guidelines</h2>
+                        <div class="scope-cols">
+                            <div>
+                                <h3>Sweet Spot:</h3>
+                                <ul>
+                                    <li>1–10 developers</li>
+                                    <li>Performance-critical</li>
+                                    <li>Direct SQL preferred</li>
+                                    <li>Custom logic heavy</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3>Manageable:</h3>
+                                <ul>
+                                    <li>Up to 50,000 LOC</li>
+                                    <li>High-traffic read-heavy</li>
+                                    <li>Integration-heavy</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.sidebar-nav a');
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    navLinks.forEach(a => a.classList.remove('active'));
+                    const active = document.querySelector(`.sidebar-nav a[href="#${e.target.id}"]`);
+                    if (active) active.classList.add('active');
+                }
+            });
+        }, { threshold: 0, rootMargin: '0px 0px -80% 0px' });
+        sections.forEach(s => observer.observe(s));
+    </script>
+
+</body>
+
+</html>
